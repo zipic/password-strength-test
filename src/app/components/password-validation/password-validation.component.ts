@@ -1,51 +1,53 @@
-import { Component } from '@angular/core';
+  import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+  import { ValidatonType } from 'src/app/model/validation-type';
+  import { PasswordService } from 'src/app/service/password.service';
 
-@Component({
-  selector: 'app-password-validation',
-  templateUrl: './password-validation.component.html',
-  styleUrls: ['./password-validation.component.scss']
-})
-export class PasswordValidationComponent {
-  password: string = '';
-  passwordIsEasy: boolean = false;
-  passwordIsMedium: boolean = false;
-  passwordIsStrong: boolean = false;
-  passwordLeastEight: boolean = false;
+  @Component({
+    selector: 'app-password-validation',
+    templateUrl: './password-validation.component.html',
+    styleUrls: ['./password-validation.component.scss']
+  })
+  export class PasswordValidationComponent implements OnChanges {
+    @Input() password: string = '';
 
-  checkPassword(event: Event) {
-    this.password = (event.target as HTMLInputElement).value;
-    if (this.password.trim().length === 0) {
-      this.passwordIsEasy = false;
-      this.passwordIsMedium = false;
-      this.passwordIsStrong = false;
-      this.passwordLeastEight = false;
-    } else {
-      this.validation();
-    }
-  }
+    passwordValidation: ValidatonType = {
+      easy: false,
+      medium: false,
+      strong: false,
+      leastEight: false
+    };
 
-  validation() {
-    const length = this.password.length;
-    const onlyNumbers = /[0-9]/.test(this.password);
-    const onlyLetters = /[a-zA-Z]/.test(this.password);
-    const onlySymbols = /[!@#$%^&*(),.?":{}|<>+=-]/.test(this.password);
+    constructor(private passwordService: PasswordService) {}
 
-    this.passwordLeastEight = length < 8;
-
-    if (!this.passwordIsStrong) {
-      this.passwordIsEasy = (onlyNumbers || onlyLetters || onlySymbols)
-      || this.passwordLeastEight;
-    } else {
-      this.passwordIsEasy = false;
-    }
-
-      if (!this.passwordIsStrong) {
-        this.passwordIsMedium = (onlyLetters && onlySymbols) ||
-        (onlyNumbers && onlyLetters) ||
-        (onlyNumbers && onlySymbols);
-      } else {
-        this.passwordIsMedium = false;
+    ngOnChanges(changes: SimpleChanges): void {
+      if (changes['password']) {
+        this.passwordChange(this.password);
       }
-    this.passwordIsStrong = (onlyNumbers && onlySymbols && onlyLetters);
+    }
+
+    passwordChange(value: string) {
+      if (value.trim().length === 0) {
+        this.passwordValidation = {
+          easy: false,
+          medium: false,
+          strong: false,
+          leastEight: false
+        };
+      } else {
+        this.passwordValidation = this.passwordService.validation(value.toLowerCase());
+      }
+    }
+
+    getPasswordClass(type: string) {
+      switch (type) {
+        case 'easy':
+          return { 'danger': this.passwordValidation.easy, 'medium': this.passwordValidation.medium, 'strong': this.passwordValidation.strong };
+        case 'medium':
+          return { 'danger': this.passwordValidation.leastEight, 'medium': this.passwordValidation.medium, 'strong': this.passwordValidation.strong };
+        case 'strong':
+          return { 'strong': this.passwordValidation.strong, 'danger': this.passwordValidation.leastEight };
+        default:
+          return {};
+      }
+    }
   }
-}

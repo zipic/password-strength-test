@@ -1,0 +1,10 @@
+<div class="validator">
+  <h1 class="validator__title">Check password</h1>
+<input
+  class="validator__input"
+  type="password"
+  placeholder="enter your password..."
+  [formControl]="passwordControl"
+>
+<app-password-validation [password]="passwordControl.value"></app-password-validation>
+</div>
